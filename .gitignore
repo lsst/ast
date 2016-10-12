@@ -1,3 +1,5 @@
+_eupspkg/
+_build.*
 /AST_PAR
 /addversion
 /ast.h
@@ -22,24 +24,16 @@
 .deps/
 .libs/
 .bug
-AST_ERR
 Makefile
-Makefile.in
-aclocal.m4
-ast_err.h
 ast_test.log
 autom4te.cache/
-build-aux/
 cminpack/.deps/
 cminpack/.dirstamp
 componentinfo.dtd
 config.h
-config.h.in
 config.log
 config.status
-configure
 experiments
-fac_1521_err
 libtool
 stamp-h1
 starconf.status
@@ -60,3 +54,4 @@ make.log
 make.log.err
 *~
 ast_tester/*.ps
+ups/starlink_ast.cfgc
