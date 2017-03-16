@@ -29,6 +29,7 @@ ast_test.log
 autom4te.cache/
 cminpack/.deps/
 cminpack/.dirstamp
+component.xml
 componentinfo.dtd
 config.h
 config.log

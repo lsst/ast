@@ -590,8 +590,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='ast'
 PACKAGE_TARNAME='ast'
-PACKAGE_VERSION='8.2.0'
-PACKAGE_STRING='ast 8.2.0'
+PACKAGE_VERSION='8.5.0'
+PACKAGE_STRING='ast 8.5.0'
 PACKAGE_BUGREPORT='starlink@jiscmail.ac.uk'
 PACKAGE_URL=''
 
