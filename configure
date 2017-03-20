@@ -3535,7 +3535,7 @@ fi
 # test of starconf.status: in a pre-distribution state, this file must
 # be present in the component directory (where we are running
 # ./configure), but must not be present in any subdirectory.
-_star_predist_status=unknown
+_star_predist_status=postdist
 PREDIST='#'  # safe default
 
 
