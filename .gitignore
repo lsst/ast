@@ -15,7 +15,6 @@ _build.*
 /sun210.pdf
 /sun211.tex
 /sun211.pdf
-/version.h
 /*.trs
 *.safe
 *.lo
