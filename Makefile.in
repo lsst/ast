@@ -152,29 +152,29 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 @EXTERNAL_PAL_FALSE@libast_la_DEPENDENCIES = libast_pal.la
 @EXTERNAL_PAL_TRUE@libast_la_DEPENDENCIES = $(libdir)/libpal.la
-am__libast_la_SOURCES_DIST = axis.c box.c channel.c circle.c \
-	cmpframe.c cmpmap.c cmpregion.c dsbspecframe.c dssmap.c \
-	ellipse.c error.c fitschan.c fitstable.c fluxframe.c frame.c \
-	frameset.c globals.c grismmap.c interval.c intramap.c keymap.c \
-	loader.c lutmap.c mapping.c mathmap.c matrixmap.c memory.c \
-	normmap.c nullregion.c object.c pcdmap.c permmap.c plot.c \
-	plot3d.c pointlist.c pointset.c polygon.c polymap.c prism.c \
-	ratemap.c region.c selectormap.c shiftmap.c skyaxis.c \
+am__libast_la_SOURCES_DIST = axis.c box.c channel.c chebymap.c \
+	circle.c cmpframe.c cmpmap.c cmpregion.c dsbspecframe.c \
+	dssmap.c ellipse.c error.c fitschan.c fitstable.c fluxframe.c \
+	frame.c frameset.c globals.c grismmap.c interval.c intramap.c \
+	keymap.c loader.c lutmap.c mapping.c mathmap.c matrixmap.c \
+	memory.c normmap.c nullregion.c object.c pcdmap.c permmap.c \
+	plot.c plot3d.c pointlist.c pointset.c polygon.c polymap.c \
+	prism.c ratemap.c region.c selectormap.c shiftmap.c skyaxis.c \
 	skyframe.c slamap.c specfluxframe.c specframe.c specmap.c \
 	sphmap.c stc.c stccatalogentrylocation.c stcobsdatalocation.c \
 	stcresourceprofile.c stcschan.c stcsearchlocation.c \
 	switchmap.c table.c timeframe.c timemap.c tranmap.c unit.c \
 	unitmap.c unitnormmap.c wcsmap.c winmap.c xml.c xmlchan.c \
-	zoommap.c c2f77.c fbox.c fchannel.c fcircle.c fcmpframe.c \
-	fcmpmap.c fcmpregion.c fdsbspecframe.c fdssmap.c fellipse.c \
-	ferror.c ffitschan.c ffitstable.c ffluxframe.c fframe.c \
-	fframeset.c fgrismmap.c finterval.c fintramap.c fkeymap.c \
-	flutmap.c fmapping.c fmathmap.c fmatrixmap.c fnormmap.c \
-	fnullregion.c fobject.c fpcdmap.c fpermmap.c fplot.c fplot3d.c \
-	fpointlist.c fpolygon.c fpolymap.c fprism.c fratemap.c \
-	fregion.c fselectormap.c fshiftmap.c fskyframe.c fslamap.c \
-	fspecfluxframe.c fspecframe.c fspecmap.c fsphmap.c fstc.c \
-	fstccatalogentrylocation.c fstcobsdatalocation.c \
+	zoommap.c c2f77.c fbox.c fchannel.c fchebymap.c fcircle.c \
+	fcmpframe.c fcmpmap.c fcmpregion.c fdsbspecframe.c fdssmap.c \
+	fellipse.c ferror.c ffitschan.c ffitstable.c ffluxframe.c \
+	fframe.c fframeset.c fgrismmap.c finterval.c fintramap.c \
+	fkeymap.c flutmap.c fmapping.c fmathmap.c fmatrixmap.c \
+	fnormmap.c fnullregion.c fobject.c fpcdmap.c fpermmap.c \
+	fplot.c fplot3d.c fpointlist.c fpolygon.c fpolymap.c fprism.c \
+	fratemap.c fregion.c fselectormap.c fshiftmap.c fskyframe.c \
+	fslamap.c fspecfluxframe.c fspecframe.c fspecmap.c fsphmap.c \
+	fstc.c fstccatalogentrylocation.c fstcobsdatalocation.c \
 	fstcresourceprofile.c fstcschan.c fstcsearchlocation.c \
 	fswitchmap.c ftable.c ftimeframe.c ftimemap.c ftranmap.c \
 	funitmap.c funitnormmap.c fwcsmap.c fwinmap.c fxmlchan.c \
@@ -182,8 +182,8 @@ am__libast_la_SOURCES_DIST = axis.c box.c channel.c circle.c \
 	unit.h ast_err.h version.h object.h keymap.h table.h \
 	fitstable.h pointset.h axis.h skyaxis.h mapping.h cmpmap.h \
 	dssmap.h grismmap.h intramap.h lutmap.h mathmap.h matrixmap.h \
-	pcdmap.h permmap.h polymap.h ratemap.h normmap.h shiftmap.h \
-	slamap.h specmap.h sphmap.h timemap.h selectormap.h \
+	pcdmap.h permmap.h polymap.h chebymap.h ratemap.h normmap.h \
+	shiftmap.h slamap.h specmap.h sphmap.h timemap.h selectormap.h \
 	switchmap.h tranmap.h unitmap.h unitnormmap.h wcsmap.h \
 	winmap.h zoommap.h frame.h cmpframe.h specfluxframe.h \
 	fluxframe.h frameset.h plot.h plot3d.h skyframe.h specframe.h \
@@ -198,12 +198,13 @@ am__libast_la_SOURCES_DIST = axis.c box.c channel.c circle.c \
 	cminpack/dpmpar.c cminpack/enorm.c cminpack/qrfac.c \
 	cminpack/lmpar.c cminpack/qrsolv.c proj.c tpn.c wcstrig.c
 am__objects_1 = libast_la-axis.lo libast_la-box.lo \
-	libast_la-channel.lo libast_la-circle.lo libast_la-cmpframe.lo \
-	libast_la-cmpmap.lo libast_la-cmpregion.lo \
-	libast_la-dsbspecframe.lo libast_la-dssmap.lo \
-	libast_la-ellipse.lo libast_la-error.lo libast_la-fitschan.lo \
-	libast_la-fitstable.lo libast_la-fluxframe.lo \
-	libast_la-frame.lo libast_la-frameset.lo libast_la-globals.lo \
+	libast_la-channel.lo libast_la-chebymap.lo libast_la-circle.lo \
+	libast_la-cmpframe.lo libast_la-cmpmap.lo \
+	libast_la-cmpregion.lo libast_la-dsbspecframe.lo \
+	libast_la-dssmap.lo libast_la-ellipse.lo libast_la-error.lo \
+	libast_la-fitschan.lo libast_la-fitstable.lo \
+	libast_la-fluxframe.lo libast_la-frame.lo \
+	libast_la-frameset.lo libast_la-globals.lo \
 	libast_la-grismmap.lo libast_la-interval.lo \
 	libast_la-intramap.lo libast_la-keymap.lo libast_la-loader.lo \
 	libast_la-lutmap.lo libast_la-mapping.lo libast_la-mathmap.lo \
@@ -228,9 +229,9 @@ am__objects_1 = libast_la-axis.lo libast_la-box.lo \
 	libast_la-winmap.lo libast_la-xml.lo libast_la-xmlchan.lo \
 	libast_la-zoommap.lo
 @NOFORTRAN_FALSE@am__objects_2 = libast_la-c2f77.lo libast_la-fbox.lo \
-@NOFORTRAN_FALSE@	libast_la-fchannel.lo libast_la-fcircle.lo \
-@NOFORTRAN_FALSE@	libast_la-fcmpframe.lo libast_la-fcmpmap.lo \
-@NOFORTRAN_FALSE@	libast_la-fcmpregion.lo \
+@NOFORTRAN_FALSE@	libast_la-fchannel.lo libast_la-fchebymap.lo \
+@NOFORTRAN_FALSE@	libast_la-fcircle.lo libast_la-fcmpframe.lo \
+@NOFORTRAN_FALSE@	libast_la-fcmpmap.lo libast_la-fcmpregion.lo \
 @NOFORTRAN_FALSE@	libast_la-fdsbspecframe.lo \
 @NOFORTRAN_FALSE@	libast_la-fdssmap.lo libast_la-fellipse.lo \
 @NOFORTRAN_FALSE@	libast_la-ferror.lo libast_la-ffitschan.lo \
@@ -820,6 +821,7 @@ GRP_C_ROUTINES = \
     axis.c \
     box.c \
     channel.c \
+    chebymap.c \
     circle.c \
     cmpframe.c \
     cmpmap.c \
@@ -893,6 +895,7 @@ GRP_C_ROUTINES = \
 @NOFORTRAN_FALSE@    c2f77.c \
 @NOFORTRAN_FALSE@    fbox.c \
 @NOFORTRAN_FALSE@    fchannel.c \
+@NOFORTRAN_FALSE@    fchebymap.c \
 @NOFORTRAN_FALSE@    fcircle.c \
 @NOFORTRAN_FALSE@    fcmpframe.c \
 @NOFORTRAN_FALSE@    fcmpmap.c \
@@ -985,6 +988,7 @@ AST_H_FILES = \
           pcdmap.h \
           permmap.h \
           polymap.h \
+             chebymap.h \
           ratemap.h \
           normmap.h \
           shiftmap.h \
@@ -1818,6 +1822,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-box.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-c2f77.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-channel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-chebymap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-circle.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-cmpframe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-cmpmap.Plo@am__quote@
@@ -1828,6 +1833,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fbox.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fchannel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fchebymap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fcircle.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fcmpframe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libast_la-fcmpmap.Plo@am__quote@
@@ -2005,6 +2011,13 @@ libast_la-channel.lo: channel.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='channel.c' object='libast_la-channel.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -c -o libast_la-channel.lo `test -f 'channel.c' || echo '$(srcdir)/'`channel.c
+
+libast_la-chebymap.lo: chebymap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -MT libast_la-chebymap.lo -MD -MP -MF $(DEPDIR)/libast_la-chebymap.Tpo -c -o libast_la-chebymap.lo `test -f 'chebymap.c' || echo '$(srcdir)/'`chebymap.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libast_la-chebymap.Tpo $(DEPDIR)/libast_la-chebymap.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='chebymap.c' object='libast_la-chebymap.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -c -o libast_la-chebymap.lo `test -f 'chebymap.c' || echo '$(srcdir)/'`chebymap.c
 
 libast_la-circle.lo: circle.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -MT libast_la-circle.lo -MD -MP -MF $(DEPDIR)/libast_la-circle.Tpo -c -o libast_la-circle.lo `test -f 'circle.c' || echo '$(srcdir)/'`circle.c
@@ -2488,6 +2501,13 @@ libast_la-fchannel.lo: fchannel.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='fchannel.c' object='libast_la-fchannel.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -c -o libast_la-fchannel.lo `test -f 'fchannel.c' || echo '$(srcdir)/'`fchannel.c
+
+libast_la-fchebymap.lo: fchebymap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -MT libast_la-fchebymap.lo -MD -MP -MF $(DEPDIR)/libast_la-fchebymap.Tpo -c -o libast_la-fchebymap.lo `test -f 'fchebymap.c' || echo '$(srcdir)/'`fchebymap.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libast_la-fchebymap.Tpo $(DEPDIR)/libast_la-fchebymap.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='fchebymap.c' object='libast_la-fchebymap.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -c -o libast_la-fchebymap.lo `test -f 'fchebymap.c' || echo '$(srcdir)/'`fchebymap.c
 
 libast_la-fcircle.lo: fcircle.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(STAR_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) $(libast_la_CFLAGS) $(CFLAGS) -MT libast_la-fcircle.lo -MD -MP -MF $(DEPDIR)/libast_la-fcircle.Tpo -c -o libast_la-fcircle.lo `test -f 'fcircle.c' || echo '$(srcdir)/'`fcircle.c
