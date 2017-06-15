@@ -32,4 +32,4 @@ If `ast_err.msg` is updated then somebody with `messgen` must run it to `ast_err
 If you forget then builds will fail because the missing error codes will be listed as undeclared.
 
 
-If `configure.ac` for `Makefile.am` are updated then somebody with the starlink build tools (e.g. Tim Jeness), will have to run `configure` to update various build files.
+If `configure.ac` or `Makefile.am` are updated then somebody with the starlink build tools (e.g. Tim Jeness), will have to run `configure` to update various build files.
