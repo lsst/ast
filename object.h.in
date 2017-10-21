@@ -391,6 +391,26 @@
 #define AST__COUSIN -1000000
 #endif
 
+/* Number of digits to use when formatting double precision floating point
+   values. DBL_DIG ensures no loss when round-tripping from text to
+   binary to text, but we want no loss when round-tripping from binary to
+   text to binary, so we use DBL_DECIMAL_DIG instead. If this is not
+   avaialable we use DBL_DIG but add on an extra 3 digits. */
+#ifdef DBL_DECIMAL_DIG
+  #define AST__DBL_DIG (DBL_DECIMAL_DIG)
+#else
+  #define AST__DBL_DIG (DBL_DIG + 3)
+#endif
+
+#ifdef FLT_DECIMAL_DIG
+  #define AST__FLT_DIG (FLT_DECIMAL_DIG)
+#else
+  #define AST__FLT_DIG (FLT_DIG + 3)
+#endif
+
+
+
+
 /*
 *+
 *  Name:
@@ -1493,6 +1513,7 @@ typedef struct AstClassIdentifier {
    included (below). Hence make a preliminary definition available
    now. */
 struct AstChannel;
+struct KeyMap;
 
 /* This table contains all information that is the same for all
    objects in the class (e.g. pointers to its virtual functions). */
@@ -1659,6 +1680,7 @@ void astImportId_( AstObject *, int * );
 void astSetId_( void *, const char *, ... )__attribute__((format(printf,2,3)));
 #endif
 
+struct AstKeyMap *astActiveObjects_( const char *, int, int, int *);
 AstObject *astAnnulId_( AstObject *, int * );
 AstObject *astCheckLock_( AstObject *, int * );
 AstObject *astClone_( AstObject *, int * );
@@ -1674,6 +1696,7 @@ int astHasAttribute_( AstObject *, const char *, int * );
 int astSame_( AstObject *, AstObject *, int * );
 int astTest_( AstObject *, const char *, int * );
 long astGetL_( AstObject *, const char *, int * );
+void astCreatedAtId_( AstObject *, const char **, const char **, int *, int *);
 void *astGetProxy_( AstObject *, int * );
 void astClear_( AstObject *, const char *, int * );
 void astExemptId_( AstObject *, int * );
@@ -1781,6 +1804,9 @@ astINVOKE(O,astLoadObject_(mem,size,vtab,name,astCheckChannel(channel),STATUS_PT
 #define astMakePointer(id) ((void *)astCheckLock_(astMakePointer_((AstObject *)(id),STATUS_PTR),STATUS_PTR))
 #define astToString(this) astINVOKE(V,astToString_(astCheckObject(this),STATUS_PTR))
 #define astFromString(string) astINVOKE(O,astFromString_(string,STATUS_PTR))
+#define astCreatedAt(this,routine,file,line) astINVOKE(V,astCreatedAtId_((AstObject *)this,routine,file,line,STATUS_PTR))
+#define astActiveObjects(class,subclass,current) astINVOKE(O,astActiveObjects_(class,subclass,current,STATUS_PTR))
+
 
 /* Interfaces to member functions. */
 /* ------------------------------- */

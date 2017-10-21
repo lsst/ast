@@ -7,7 +7,7 @@ dnl   1.5.  It should work with autoconf versions 2.50 or better, and
 dnl   automake 1.6 or better.
 
 dnl   Initialisation: package name and version number
-AC_INIT([ast],[8.5.1],[starlink@jiscmail.ac.uk])
+AC_INIT([ast],[8.6.0],[starlink@jiscmail.ac.uk])
 AC_CONFIG_AUX_DIR([build-aux])
 
 dnl   Require autoconf-2.50 at least
@@ -106,6 +106,33 @@ AC_CHECK_TYPES([int64_t, uint64_t])
 # Calculate alternative 64 bit integer sizes
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+
+
+# Decide how to get the name of the curently executing function.
+# -------------------------------------------------------------
+AC_DEFUN([CIT_FUNCTIONSTRING], [
+  set_function_name=no
+
+  AC_MSG_CHECKING([whether C compiler defines __FUNCTION__])
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[]], [[const char* name = __FUNCTION__;]])],
+    [AC_MSG_RESULT(yes)
+     set_function_name=yes
+     AC_DEFINE([FUNCTION_NAME], [__FUNCTION__], [Variable holding current function name.])],
+    [AC_MSG_RESULT(no)])
+
+  if test "$set_function_name" == no; then
+    AC_MSG_CHECKING([whether C compiler defines __func__])
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([[]], [[const char* name = __func__;]])],
+      [AC_MSG_RESULT(yes)
+       set_function_name=yes
+       AC_DEFINE([FUNCTION_NAME], [__func__], [Variable holding current function name.])],
+      [AC_MSG_RESULT(no)])
+  fi
+])
+
+CIT_FUNCTIONSTRING
 
 #  Conditional defining whether we want to support Fortran libraries
 #  (e.g. pgplot) and applications.
