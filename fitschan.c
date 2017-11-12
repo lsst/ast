@@ -1177,6 +1177,24 @@ f     - AST_WRITEFITS: Write all cards out to the sink function
 *        Allow a NULL keyword name to be supplied to astTestFits to
 *        indicate that the current card should be used (as is also done in
 *        astGetFits).
+*     25-OCT-2017 (DSB):
+*        Added attribute FitsTol.
+*     27-OCT-2017 (DSB):
+*        In RoundFString, only right justift the final string if a
+*        minimum field width is given. Otherwise, leave the unchanged
+*        characters in their original positions. Right justifying ccould
+*        cause very long strings to be returned.
+*     6-NOV-2017 (DSB):
+*        In CelestialAxes, simplify the base->current mapping before
+*        attempting to split it. This can cause multiple WcsMaps to cancel out,
+*        which could otherwise prevent SplitMap from splitting the Mapping
+*        successfully.
+*     7-NOV-2017 (DSB):
+*        If an IWC Frame is included in the FrameSet returned by astRead, 
+*        ensure it comes between the pixel and sky frames in the mapping chain. 
+*        Previously the order was PIXEL->SKY->IWC, Now it is PIXEL->IWC->SKY.
+*        The inter-Frame Mappings required by the new arrangment are simpler 
+*        than for the old arrangement.
 *class--
 */
 
@@ -1717,6 +1735,11 @@ static void ClearWarnings( AstFitsChan *, int * );
 static const char *GetWarnings( AstFitsChan *, int * );
 static int TestWarnings( AstFitsChan *, int * );
 static void SetWarnings( AstFitsChan *, const char *, int * );
+static double GetFitsTol( AstFitsChan *, int * );
+static int TestFitsTol( AstFitsChan *, int * );
+static void ClearFitsTol( AstFitsChan *, int * );
+static void SetFitsTol( AstFitsChan *, double, int * );
+
 
 static AstFitsChan *SpecTrans( AstFitsChan *, int, const char *, const char *, int * );
 static AstFitsTable *GetNamedTable( AstFitsChan *, const char *, int, int, int, const char *, int * );
@@ -1836,7 +1859,7 @@ static int IsSkyOff( AstFrameSet *, int, int * );
 static int KeyFields( AstFitsChan *, const char *, int, int *, int *, int * );
 static int LooksLikeClass( AstFitsChan *, const char *, const char *, int * );
 static int MakeBasisVectors( AstMapping *, int, int, double *, AstPointSet *, AstPointSet *, int * );
-static int MakeIntWorld( AstMapping *, AstFrame *, int *, char, FitsStore *, double *, const char *, const char *, int * );
+static int MakeIntWorld( AstMapping *, AstFrame *, int *, char, FitsStore *, double *, double, const char *, const char *, int * );
 static int Match( const char *, const char *, int, int *, int *, const char *, const char *, int * );
 static int MatchChar( char, char, const char *, const char *, const char *, int * );
 static int MatchFront( const char *, const char *, char *, int *, int *, int *, const char *, const char *, const char *, int * );
@@ -2369,6 +2392,7 @@ static void AddFrame( AstFitsChan *this, AstFrameSet *fset, int pixel,
    int *inperm;                /* Pointer to input axis permutation array */
    int *outperm;               /* Pointer to output axis permutation array */
    int i;                      /* Axis index */
+   int nf;                     /* Number of Frames originally in fset */
    int nwcs;                   /* Number of wcs axes */
 
 /* Check the inherited status. */
@@ -2406,7 +2430,18 @@ static void AddFrame( AstFitsChan *this, AstFrameSet *fset, int pixel,
          inperm = astFree( inperm );
          outperm = astFree( outperm );
       }
+
+/* Record the original number of Frames in the FrameSet. */
+      nf = astGetNframe( fset );
+
+/* Add in the Frame (which may be a FrameSet). */
       astAddFrame( fset, pixel, mapping, frame );
+
+/* Ensure the WCS Frame is the current Frame within fset (it may not be if
+   the frame returned by WcsMapFrm is actually a FrameSet containing a IWC
+   Frame as well as a WCS Frame). The WCS Frame is always the first frame
+   in the frame/frameset returned by WcsMapFrm. */
+      astSetCurrent( fset, nf + 1 );
 
 /* Annul temporary resources. */
       mapping = astAnnul( mapping );
@@ -2502,6 +2537,7 @@ static int AddVersion( AstFitsChan *this, AstFrameSet *fs, int ipix, int iwcs,
    double cdelt;            /* CDELT value for axis */
    double crpix;            /* CRPIX value for axis */
    double crval;            /* CRVAL value for axis */
+   double fitstol;          /* Max departure from linearity, in pixels */
    double pc;               /* Element of the PC array */
    int *axis_done;          /* Flags indicating which axes have been done */
    int *wperm;              /* FITS axis for each Mapping output (Frame axis) */
@@ -2580,7 +2616,7 @@ static int AddVersion( AstFitsChan *this, AstFrameSet *fs, int ipix, int iwcs,
 /* We now need to choose the "FITS WCS axis" (i.e. the number that is included
    in FITS keywords such as CRVAL2) for each axis of the output Frame.
    Allocate memory to store these indices. */
-   nwcs= astGetNout( mapping );
+   nwcs = astGetNout( mapping );
    wperm = astMalloc( sizeof(int)*(size_t) nwcs );
 
 /* Attempt to use the FitsAxisOrder attribute to determine the order. If
@@ -2644,11 +2680,15 @@ static int AddVersion( AstFitsChan *this, AstFrameSet *fs, int ipix, int iwcs,
    mapping = astAnnul( mapping );
    iwcmap = astAnnul( iwcmap );
 
+/* Get the maximum departure from linearity, in pixels, for the pixiwcmap
+   mapping to be considered linear. */
+   fitstol = astGetFitsTol( this );
+
 /* Now attempt to store values for the keywords describing the pixel->IWC
    Mapping (CRPIX, CD, PC, CDELT). This tests that the iwcmap is linear.
    Zero is returned if the test fails. */
-   ret = MakeIntWorld( pixiwcmap, wcsfrm, wperm, s, store, dim, method, class,
-                       status );
+   ret = MakeIntWorld( pixiwcmap, wcsfrm, wperm, s, store, dim, fitstol,
+                       method, class, status );
 
 /* If succesfull... */
    if( ret ) {
@@ -4287,9 +4327,10 @@ static AstMapping *CelestialAxes( AstFitsChan *this, AstFrameSet *fs, double *di
    AstFitsTable *table;    /* Pointer to structure holding -TAB table info */
    AstFrame *pframe;       /* Primary Frame containing current WCS axis*/
    AstFrame *wcsfrm;       /* WCS Frame within FrameSet */
+   AstMapping *map0;       /* Unsimplified Pixel -> WCS mapping */
    AstMapping *map1;       /* Pointer to pre-WcsMap Mapping */
    AstMapping *map3;       /* Pointer to post-WcsMap Mapping */
-   AstMapping *map;        /* Pixel -> WCS mapping */
+   AstMapping *map;        /* Simplified Pixel -> WCS mapping */
    AstMapping *ret;        /* Returned Mapping */
    AstMapping *tmap0;      /* A temporary Mapping */
    AstMapping *tmap1;      /* A temporary Mapping */
@@ -4396,7 +4437,9 @@ static AstMapping *CelestialAxes( AstFitsChan *this, AstFrameSet *fs, double *di
       ppcfid = (double *) astMalloc( sizeof( double )*nwcs );
 
 /* Get the pixel->wcs Mapping. */
-      map = astGetMapping( fs, AST__BASE, AST__CURRENT );
+      map0 = astGetMapping( fs, AST__BASE, AST__CURRENT );
+      map = astSimplify( map0 );
+      map0 = astAnnul( map0 );
 
 /* Get the table version number to use if we end up using the -TAB
    algorithm. This is the set value of the TabOK attribute (if positive). */
@@ -6498,6 +6541,11 @@ static void ClearAttrib( AstObject *this_object, const char *attrib, int *status
 /* ------ */
    } else if ( !strcmp( attrib, "carlin" ) ) {
       astClearCarLin( this );
+
+/* FitsTol */
+/* ------- */
+   } else if ( !strcmp( attrib, "fitstol" ) ) {
+      astClearFitsTol( this );
 
 /* PolyTan */
 /* ------- */
@@ -16022,6 +16070,7 @@ const char *GetAttrib( AstObject *this_object, const char *attrib, int *status )
    astDECLARE_GLOBALS            /* Declare the thread specific global data */
    AstFitsChan *this;            /* Pointer to the FitsChan structure */
    const char *result;           /* Pointer value to return */
+   double dval;                  /* Double attribute value */
    int ival;                     /* Integer attribute value */
 
 /* Initialise. */
@@ -16123,6 +16172,15 @@ const char *GetAttrib( AstObject *this_object, const char *attrib, int *status )
       ival = astGetCarLin( this );
       if ( astOK ) {
          (void) sprintf( getattrib_buff, "%d", ival );
+         result = getattrib_buff;
+      }
+
+/* FitsTol. */
+/* -------- */
+   } else if ( !strcmp( attrib, "fitstol" ) ) {
+      dval = astGetFitsTol( this );
+      if ( astOK ) {
+         (void) sprintf( getattrib_buff, "%.*g", AST__DBL_DIG, dval );
          result = getattrib_buff;
       }
 
@@ -17659,6 +17717,10 @@ void astInitFitsChanVtab_(  AstFitsChanVtab *vtab, const char *name, int *status
    vtab->TestCarLin = TestCarLin;
    vtab->SetCarLin = SetCarLin;
    vtab->GetCarLin = GetCarLin;
+   vtab->ClearFitsTol = ClearFitsTol;
+   vtab->TestFitsTol = TestFitsTol;
+   vtab->SetFitsTol = SetFitsTol;
+   vtab->GetFitsTol = GetFitsTol;
    vtab->ClearPolyTan = ClearPolyTan;
    vtab->TestPolyTan = TestPolyTan;
    vtab->SetPolyTan = SetPolyTan;
@@ -20701,7 +20763,7 @@ static void MakeIntoComment( AstFitsChan *this, const char *method,
 }
 
 static int MakeIntWorld( AstMapping *cmap, AstFrame *fr, int *wperm, char s,
-                         FitsStore *store, double *dim,
+                         FitsStore *store, double *dim, double fitstol,
                          const char *method, const char *class, int *status ){
 /*
 *  Name:
@@ -20717,7 +20779,7 @@ static int MakeIntWorld( AstMapping *cmap, AstFrame *fr, int *wperm, char s,
 *  Synopsis:
 *     #include "fitschan.h"
 *     int MakeIntWorld( AstMapping *cmap, AstFrame *fr, int *wperm, char s,
-*                       FitsStore *store, double *dim,
+*                       FitsStore *store, double *dim, double fitstol,
 *                       const char *method, const char *class, int *status )
 
 *  Class Membership:
@@ -20764,6 +20826,10 @@ static int MakeIntWorld( AstMapping *cmap, AstFrame *fr, int *wperm, char s,
 *     dim
 *        An array holding the image dimensions in pixels. AST__BAD can be
 *        supplied for any unknwon dimensions.
+*     fitstol
+*        The maximum departure from linearity that can be introduced by
+*        "cmap" on any axis for it to be considered linear. Expressed as
+*        a fraction of a grid pixel.
 *     method
 *        Pointer to a string holding the name of the calling method.
 *        This is only for use in constructing error messages.
@@ -20901,15 +20967,15 @@ static int MakeIntWorld( AstMapping *cmap, AstFrame *fr, int *wperm, char s,
       for( j = 0; j < nout; j++ ) {
          w0[ j ] = ptrw[ j ][ 0 ];
 
-/* Find the tolerance for positions on the j'th IWC axis. This is one
-   tenth of the largest change in the j'th IWC axis value caused by
-   moving out 1 pixel along any grid axis. */
+/* Find the tolerance for positions on the j'th IWC axis. This is a
+   fraction "fitstol" of the largest change in the j'th IWC axis value
+   caused by moving out 1 pixel along any grid axis. */
          tol[ j ] = 0.0;
          for( i = 0; i < nin; i++ ) {
             err = fabs( ptrw[ j ][ i + 1 ] - w0[ j ] );
             if( err > tol[ j ] ) tol[ j ] = err;
          }
-         tol[ j ] *= 0.1;
+         tol[ j ] *= fitstol;
 
 /* If the tolerance is zero (e.g. as is produced for degenerate axes),
    then use a tolerance equal to a very small fraction of hte degenerate
@@ -25457,12 +25523,15 @@ static void RoundFString( char *text, int width, int *status ){
       }
    }
 
-/* Right justify the returned string in the original field width. */
-   end = text + len;
-   c = text + strlen( text );
-   if( c != end ) {
-      while( c >= text ) *(end--) = *(c--);
-      while( end >= text ) *(end--) = ' ';
+/* If a minimum field width has been given, right justify the returned
+   string in the original field width. */
+   if( width ) {
+      end = text + len;
+      c = text + strlen( text );
+      if( c != end ) {
+         while( c >= text ) *(end--) = *(c--);
+         while( end >= text ) *(end--) = ' ';
+      }
    }
 
 /* If a minimum field width was given, shunt the text to the left in
@@ -25939,6 +26008,7 @@ static void SetAttrib( AstObject *this_object, const char *setting, int *status 
 /* Local Variables: */
    AstFitsChan *this;            /* Pointer to the FitsChan structure */
    const char *class;            /* Object class */
+   double dval;                  /* Double attribute value */
    int ival;                     /* Integer attribute value */
    int len;                      /* Length of setting string */
    int nc;                       /* Number of characters read by astSscanf */
@@ -26045,6 +26115,13 @@ static void SetAttrib( AstObject *this_object, const char *setting, int *status 
         ( 1 == astSscanf( setting, "carlin= %d %n", &ival, &nc ) )
         && ( nc >= len ) ) {
       astSetCarLin( this, ival );
+
+/* FitsTol. */
+/* -------- */
+   } else if ( nc = 0,
+        ( 1 == astSscanf( setting, "fitstol= %lg %n", &dval, &nc ) )
+        && ( nc >= len ) ) {
+      astSetFitsTol( this, dval );
 
 /* PolyTan */
 /* ------- */
@@ -32043,6 +32120,11 @@ static int TestAttrib( AstObject *this_object, const char *attrib, int *status )
    } else if ( !strcmp( attrib, "carlin" ) ) {
       result = astTestCarLin( this );
 
+/* FitsTol. */
+/* -------- */
+   } else if ( !strcmp( attrib, "fitstol" ) ) {
+      result = astTestFitsTol( this );
+
 /* PolyTan */
 /* ------- */
    } else if ( !strcmp( attrib, "polytan" ) ) {
@@ -35478,7 +35560,6 @@ static AstMapping *WcsIntWorld( AstFitsChan *this, FitsStore *store, char s,
 static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
                               AstFrame **frm, const char *method,
                               const char *class, int *status ){
-
 /*
 *  Name:
 *     WcsMapFrm
@@ -35491,7 +35572,6 @@ static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
 *     Private function.
 
 *  Synopsis:
-
 *     AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
 *                            AstFrame **frm, const char *method,
 *                            const char *class, int *status )
@@ -35519,9 +35599,9 @@ static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
 *     frm
 *        The address of a location at which to store a pointer to the
 *        Frame describing the world coordinate axes. If the Iwc attribute
-*        is non-zero, then this is actually a FrameSet in which the current
-*        Frame is the required WCS system. The FrameSet also contains one
-*        other Frame which defines the FITS IWC system.
+*        is non-zero, then this is actually a FrameSet in which Frame 1
+*        is the base Frame and describes the required WCS system. Frame
+*        2 is the current Frame and describes the FITS IWC system.
 *     method
 *        A pointer to a string holding the name of the calling method.
 *        This is used only in the construction of error messages.
@@ -35532,7 +35612,9 @@ static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
 *        Pointer to the inherited status variable.
 
 *  Returned Value:
-*     A pointer to the Mapping.
+*     A pointer to the Mapping. If the Iwc attribute is non-zero, this
+*     will be the Mapping from pixel to IWC coordinates. Otherwise it
+*     will be the mapping from pixel to WCS coordinates.
 */
 
 /* Local Variables: */
@@ -35670,17 +35752,17 @@ static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
    dtai = GetItem( &(store->dtai), 0, 0, s, NULL, method, class, status );
    if( dtai != AST__BAD ) astSetDtai( *frm, dtai );
 
-/* The returned Frame is actually a FrameSet in which the current Frame
+/* The returned Frame is actually a FrameSet in which the base (first) Frame
    is the required WCS Frame. The FrameSet contains one other Frame,
-   which is the Frame representing IWC. Create a FrameSet containing these
-   two Frames. */
+   which is the Frame representing IWC and is always frame 2, the current
+   Frame. Create a FrameSet containing these two Frames. */
    if( astGetIwc( this ) ) {
-      fs = astFrameSet( iwcfrm, "", status );
-      astInvert( map1 );
-      map9 = (AstMapping *) astCmpMap( map1, ret, 1, "", status );
-      astInvert( map1 );
+      fs = astFrameSet( *frm, "", status );
+      astInvert( ret );
+      map9 = (AstMapping *) astCmpMap( ret, map1, 1, "", status );
+      astInvert( ret );
       map10 = astSimplify( map9 );
-      astAddFrame( fs, AST__BASE, map10, *frm );
+      astAddFrame( fs, AST__BASE, map10, iwcfrm );
 
 /* Return this FrameSet instead of the Frame. */
       *frm = astAnnul( *frm );
@@ -35689,6 +35771,11 @@ static AstMapping *WcsMapFrm( AstFitsChan *this, FitsStore *store, char s,
 /* Free resources */
       map9 = astAnnul( map9 );
       map10 = astAnnul( map10 );
+
+/* Also modify the returned mapping so that it goes from pixel to iwc
+   instead of to wcs. */
+      ret = astAnnul( ret );
+      ret = astClone( map1 );
    }
 
 /* Annull temporary resources. */
@@ -39442,6 +39529,46 @@ static AstMapping *ZPXMapping( AstFitsChan *this, FitsStore *store, char s,
 /* Card. */
 /* ===== */
 
+/* CarLin */
+/* ====== */
+
+/*
+*att++
+*  Name:
+*     FitsTol
+
+*  Purpose:
+*     Maximum non-linearity allowed when exporting to FITS-WCS.
+
+*  Type:
+*     Public attribute.
+
+*  Synopsis:
+*     Floating point.
+
+*  Description:
+*     This attribute is used when attempting to write a FrameSet to a
+*     FitsChan using a foreign encoding. It specifies the maximum
+*     departure from linearity allowed on any axis within the mapping
+*     from pixel coordinates to Intermediate World Coordinates. It is
+*     expressed in units of pixels. If an axis of the Mapping is found
+*     to deviate from linearity by more than this amount, the write
+*     operation fails. If the linearity test succeeds, a linear
+*     approximation to the mapping is used to determine the FITS keyword
+*     values to be placed in the FitsChan.
+*
+*     The default value is one tenth of a pixel.
+
+*  Applicability:
+*     FitsChan
+*        All FitsChans have this attribute.
+*att--
+*/
+astMAKE_CLEAR(FitsChan,FitsTol,fitstol,-1.0)
+astMAKE_GET(FitsChan,FitsTol,double,1,(this->fitstol==-1.0?0.1:this->fitstol))
+astMAKE_SET(FitsChan,FitsTol,double,fitstol,(astMAX(value,0.0)))
+astMAKE_TEST(FitsChan,FitsTol,(this->fitstol!=-1.0))
+
 /*
 *att++
 *  Name:
@@ -41088,6 +41215,7 @@ static void Dump( AstObject *this_object, AstChannel *channel, int *status ) {
    char buff[ KEY_LEN + 1 ];     /* Buffer for keyword string */
    const char *class;            /* Object class */
    const char *sval;             /* Pointer to string value */
+   double dval;                  /* Double value */
    int cardtype;                 /* Keyword data type */
    int flags;                    /* Keyword flags */
    int icard;                    /* Index of current card */
@@ -41166,6 +41294,13 @@ static void Dump( AstObject *this_object, AstChannel *channel, int *status ) {
    set = TestCarLin( this, status );
    ival = set ? GetCarLin( this, status ) : astGetCarLin( this );
    astWriteInt( channel, "CarLin", set, 1, ival, (ival ? "Use simple linear CAR projections": "Use full FITS-WCS CAR projections") );
+
+/* FitsTol */
+/* ------- */
+   set = TestFitsTol( this, status );
+   dval = set ? GetFitsTol( this, status ) : astGetFitsTol( this );
+   astWriteDouble( channel, "FitsTol", set, 1, dval, "[pixel] Max allowed "
+                   "departure from linearity");
 
 /* PolyTan */
 /* ------- */
@@ -42010,6 +42145,7 @@ AstFitsChan *astInitFitsChan_( void *mem, size_t size, int init,
       new->tabok = -INT_MAX;
       new->cdmatrix = -1;
       new->carlin = -1;
+      new->fitstol = -1.0;
       new->polytan = -INT_MAX;
       new->iwc = -1;
       new->clean = -1;
@@ -42232,6 +42368,11 @@ AstFitsChan *astLoadFitsChan_( void *mem, size_t size,
 /* ------ */
       new->carlin = astReadInt( channel, "carlin", -1 );
       if ( TestCarLin( new, status ) ) SetCarLin( new, new->carlin, status );
+
+/* FitsTol */
+/* ------- */
+      new->fitstol = astReadDouble( channel, "fitstol", -1.0 );
+      if ( TestFitsTol( new, status ) ) SetFitsTol( new, new->fitstol, status );
 
 /* PolyTan */
 /* ------- */
