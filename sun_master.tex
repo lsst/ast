@@ -3866,7 +3866,9 @@ created in the same thread.
 
 If the Object pointer is then passed to another thread, the first thread
 must unlock the Object using astUnlock and the second thread must then lock
-it using astLock.
+it using astLock. Once an object has been locked or unlocked by a thread
+using a particular pointer, the locked or unlocked state of the Object
+will also be visible through any other cloned pointers to the same Object.
 
 If a thread attempts to lock an Object that is already locked by another
 thread, it can choose to report an error immediately or to wait until the
@@ -21842,6 +21844,14 @@ occurred in the AST library between versions V8.5.1 and V8.6.2 (the
 current version):
 
 \begin{enumerate}
+
+\item The behaviour of the astLinearApprox method of the Mapping class has
+been changed in cases where the Mapping being approximated generates bad
+(AST\_\_BAD) values for one or more of its outputs. Previously, any such
+Mapping would be deemed non-linear and no fit would be returned. Now, a
+fit is returned, provided the other outputs of the Mapping are linear,
+but the fit contains AST\_\_BAD values for the coefficients describing the
+bad Mapping output.
 
 \item The astWrite method of the FitsChan class can now create FITS-WCS headers
 that include keyords describing focal plane distortion using the
