@@ -23,6 +23,10 @@ You may safely ignore warnings such as:
     configure: found predist marker file version.h.in
     configure: WARNING: In postdistribution state, but predist marker file version.h.in is present
 
+Note that the package is built with AST thread protection disabled. This is because we use AST
+with Python and we want our AST objects to be compatible with the multiprocessing module.
+Multiprocessing returns objects from subprocesses by unpickling them in a separate thread
+from the main thread; unfortunately this is not compatible with AST's thread protection.
 
 
 If `ast_err.msg` is updated then somebody with `messgen` must run it to `ast_err.h` and `AST_ERR` (add `-v` for a more verbose build):
